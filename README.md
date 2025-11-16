@@ -114,7 +114,10 @@ Traditional document chunking methods use fixed-size windows that often:
 │    (store.py)     │                 │(vector_index.py) │
 └───────────────────┘                 └──────────────────┘
 ```
-
+---
+## 📸 Screenshots
+### Ingest Interface
+![UI](./sampeui.png)
 ---
 
 ## 🚀 Quick Start
