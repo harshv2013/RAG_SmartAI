@@ -38,3 +38,6 @@ temp/
 # Uploaded PDFs
 *.pdf
 upload/
+
+# POC
+POC/
