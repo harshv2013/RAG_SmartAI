@@ -1,0 +1,377 @@
+<!-- <!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RAG - Ingest & Query UI</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;margin:20px;max-width:900px}
+    h1{font-size:20px}
+    .box{border:1px solid #ddd;padding:12px;border-radius:8px;margin-bottom:16px}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    textarea{width:100%;height:120px;margin-bottom:8px}
+    input[type=text]{width:100%;padding:8px;margin-bottom:8px}
+    button{padding:8px 12px;border-radius:6px;border:1px solid #2b7cff;background:#2b7cff;color:#fff;cursor:pointer}
+    .results{white-space:pre-wrap;background:#f7f7fb;padding:10px;border-radius:6px}
+    .small{font-size:12px;color:#555}
+    .row{display:flex;gap:8px}
+    .col{flex:1}
+  </style>
+</head>
+<body>
+  <h1>RAG - Ingest & Query UI</h1>
+
+  <div class="box">
+    <label>Ingest (Text)</label>
+    <input id="doc_id_text" placeholder="doc_id (e.g. sample_doc_1)" type="text" />
+    <textarea id="text_input" placeholder="Paste text to ingest..."></textarea>
+    <div class="row">
+      <button id="btn_ingest_text">Ingest Text</button>
+      <div class="small" id="ingest_text_status"></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <label>Ingest (Upload PDF)</label>
+    <input id="doc_id_pdf" placeholder="doc_id (e.g. pdf_doc_1)" type="text" />
+    <input id="pdf_file" type="file" accept="application/pdf" />
+    <div class="row">
+      <button id="btn_ingest_pdf">Upload PDF & Ingest</button>
+      <div class="small" id="ingest_pdf_status"></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <label>Query</label>
+    <input id="query_input" placeholder="Enter query (e.g. How do transformers help NLP?)" type="text" />
+    <div class="row">
+      <button id="btn_query">Run Query</button>
+      <div class="small" id="query_status"></div>
+    </div>
+    <h3>Results</h3>
+    <div id="results" class="results">No results yet.</div>
+  </div>
+
+<script>
+const base = ""; // same origin
+
+async function ingestText() {
+  const docId = document.getElementById("doc_id_text").value.trim();
+  const text = document.getElementById("text_input").value;
+  const status = document.getElementById("ingest_text_status");
+  status.textContent = "";
+  if(!docId || !text) { status.textContent = "Provide doc_id and non-empty text."; return; }
+
+  status.textContent = "Sending..."
+  try {
+    const res = await fetch(base + "/ingest", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({doc_id: docId, text})
+    });
+    const j = await res.json();
+    if(res.ok) status.textContent = `OK — ${j.n_chunks} chunks ingested`;
+    else status.textContent = `Error: ${j.detail || JSON.stringify(j)}`;
+  } catch(err) {
+    status.textContent = "Network error: " + err.message;
+  }
+}
+
+async function ingestPDF() {
+  const fileInput = document.getElementById("pdf_file");
+  const docId = document.getElementById("doc_id_pdf").value.trim();
+  const status = document.getElementById("ingest_pdf_status");
+  status.textContent = "";
+  if(!docId) { status.textContent = "Provide doc_id."; return; }
+  if(!fileInput.files || fileInput.files.length === 0) { status.textContent = "Choose a PDF file."; return; }
+  const file = fileInput.files[0];
+  const form = new FormData();
+  form.append("file", file);
+
+  status.textContent = "Uploading..."
+  try {
+    const url = base + "/ingest?doc_id=" + encodeURIComponent(docId);
+    const res = await fetch(url, {method: "POST", body: form});
+    const j = await res.json();
+    if(res.ok) status.textContent = `OK — ${j.n_chunks} chunks ingested`;
+    else status.textContent = `Error: ${j.detail || JSON.stringify(j)}`;
+  } catch(err) {
+    status.textContent = "Network error: " + err.message;
+  }
+}
+
+async function runQuery() {
+  const q = document.getElementById("query_input").value.trim();
+  const status = document.getElementById("query_status");
+  const out = document.getElementById("results");
+  out.textContent = "";
+  status.textContent = "";
+  if(!q) { status.textContent = "Enter a query."; return; }
+  status.textContent = "Searching..."
+  try {
+    const res = await fetch(base + "/query", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({query: q, k: 5})
+    });
+    const j = await res.json();
+    if(!res.ok) {
+      status.textContent = `Error: ${j.detail || JSON.stringify(j)}`;
+      return;
+    }
+    status.textContent = `Returned ${ (j.results||[]).length } results`;
+    if(!j.results || j.results.length === 0) {
+      out.textContent = "No results.";
+      return;
+    }
+    // pretty print
+    let s = "";
+    j.results.forEach((r, i) => {
+      s += `Result #${i+1} — chunk_id: ${r.chunk_id}\nscore: ${r.score}\n\n${r.text}\n\n---\n\n`;
+    });
+    out.textContent = s;
+  } catch(err) {
+    status.textContent = "Network error: " + err.message;
+  }
+}
+
+document.getElementById("btn_ingest_text").addEventListener("click", ingestText);
+document.getElementById("btn_ingest_pdf").addEventListener("click", ingestPDF);
+document.getElementById("btn_query").addEventListener("click", runQuery);
+</script>
+</body>
+</html> -->
+
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SmartRAG — Ingest & Query</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#4f46e5;
+    --glass: rgba(255,255,255,0.03); --glass-2: rgba(255,255,255,0.02);
+    --radius:12px; --gap:14px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%; margin:0; background:linear-gradient(180deg,#071026 0%, #071026 60%, #061423 100%); color:#e6eef8}
+  .wrap{max-width:1200px;margin:28px auto;padding:20px;display:grid;grid-template-columns: 420px 1fr;gap:24px}
+  header{grid-column:1/-1; display:flex;align-items:center;gap:16px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo .mark{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;color:white}
+  h1{font-size:20px;margin:0}
+  p.lead{margin:0;color:var(--muted);font-size:13px}
+
+  /* left panel */
+  .panel{background:linear-gradient(180deg,var(--glass),var(--glass-2));padding:16px;border-radius:var(--radius);box-shadow:0 6px 24px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+  input[type="text"], textarea, select {width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);outline:none}
+  textarea{min-height:160px;resize:vertical;color:#cfe5ff}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600}
+  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe5ff}
+  .muted{color:var(--muted);font-size:13px}
+  .row{display:flex;gap:10px}
+  .small{font-size:13px;color:var(--muted)}
+
+  /* right panel */
+  .actions{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .results-list{display:grid;gap:12px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(2,8,23,0.6)}
+  .card h3{margin:0;font-size:14px}
+  .meta{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-top:8px}
+  .score{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;font-weight:700}
+  .snippet{margin-top:10px;color:#dbeafe;white-space:pre-wrap;font-size:14px;line-height:1.5}
+  .card-actions{display:flex;gap:8px;margin-top:10px}
+  .chip{padding:6px 8px;background:transparent;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:var(--muted)}
+  footer{grid-column:1/-1;margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
+
+  /* responsive */
+  @media (max-width:980px){
+    .wrap{grid-template-columns: 1fr; padding:12px}
+    .logo .mark{width:40px;height:40px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="mark">R</div>
+      <div>
+        <h1>SmartRAG</h1>
+        <p class="lead">Upload documents, ingest content, and run semantic queries — fast.</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- LEFT: Ingest -->
+  <div class="panel">
+    <label>Ingest — Text</label>
+    <input id="docIdText" placeholder="Document ID (e.g. article_01)" type="text" />
+    <label style="margin-top:10px">Paste text</label>
+    <textarea id="textArea" placeholder="Paste long document text here..."></textarea>
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+      <button id="ingestTextBtn" class="btn">Ingest Text</button>
+      <button id="clearText" class="btn secondary">Clear</button>
+      <div id="ingestTextStatus" class="small" style="margin-left:8px"></div>
+    </div>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.02);margin:14px 0;border-radius:6px">
+
+    <label>Ingest — PDF</label>
+    <input id="docIdPdf" placeholder="Document ID for PDF" type="text" />
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+      <input id="pdfInput" type="file" accept="application/pdf" />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+      <button id="ingestPdfBtn" class="btn">Upload & Ingest</button>
+      <div id="ingestPdfStatus" class="small"></div>
+    </div>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.02);margin:14px 0;border-radius:6px">
+
+    <label>Settings</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="kInput" type="number" min="1" max="20" value="5" style="width:84px" />
+      <span class="small">Top k results</span>
+    </div>
+    <div style="margin-top:8px">
+      <input id="apiKey" type="text" placeholder="Optional API key (x-api-key)" />
+      <div class="small">If your API requires a header, paste here. Otherwise leave blank.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Query & results -->
+  <div>
+    <div class="panel" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="flex:1">
+          <label>Query</label>
+          <input id="queryInput" type="text" placeholder="e.g. How do transformers improve NLP?" />
+        </div>
+        <div style="width:120px;margin-left:12px">
+          <label style="visibility:hidden">k</label>
+          <button id="queryBtn" class="btn" style="width:100%">Search</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+        <div id="queryStatus" class="small">Ready</div>
+        <div id="lastQuery" class="small muted"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="small">Results</div>
+      <div style="flex:1"></div>
+      <div id="resultCount" class="small">0</div>
+    </div>
+
+    <div id="results" class="results-list"></div>
+
+    <footer>
+      SmartRAG • Simple UI for ingestion & retrieval — local only. Built for testing and validation.
+    </footer>
+  </div>
+</div>
+
+<script>
+const apiBase = ""; // same origin
+const $ = id => document.getElementById(id);
+
+function setStatus(el, txt, ok=true) {
+  el.textContent = txt;
+  el.style.color = ok ? "#cfe5ff" : "#ffcccb";
+}
+
+async function ingestText() {
+  const docId = $('docIdText').value.trim();
+  const text = $('textArea').value.trim();
+  const status = $('ingestTextStatus');
+  if(!docId || !text) { setStatus(status, "Provide doc id and text", false); return; }
+  setStatus(status, "Sending...");
+  try {
+    const body = {doc_id: docId, text};
+    const headers = {'Content-Type':'application/json'};
+    const key = $('apiKey').value.trim(); if(key) headers['x-api-key'] = key;
+    const res = await fetch(apiBase + '/ingest', {method:'POST', headers, body: JSON.stringify(body)});
+    const j = await res.json();
+    if(res.ok) { setStatus(status, `Ingested ${j.n_chunks} chunk(s)`); $('textArea').value=''; }
+    else setStatus(status, 'Error: ' + (j.detail||JSON.stringify(j)), false);
+  } catch(e) { setStatus(status, 'Network error: ' + e.message, false); }
+}
+
+async function ingestPdf() {
+  const docId = $('docIdPdf').value.trim();
+  const file = $('pdfInput').files[0];
+  const status = $('ingestPdfStatus');
+  if(!docId) { setStatus(status, "Provide doc id", false); return; }
+  if(!file) { setStatus(status, "Choose PDF file", false); return; }
+  setStatus(status, "Uploading...");
+  try {
+    const fd = new FormData(); fd.append('file', file);
+    const key = $('apiKey').value.trim();
+    const headers = key ? {'x-api-key': key} : {};
+    const res = await fetch(apiBase + `/ingest?doc_id=${encodeURIComponent(docId)}`, {method:'POST', headers, body: fd});
+    const j = await res.json();
+    if(res.ok) setStatus(status, `Ingested ${j.n_chunks} chunk(s)`);
+    else setStatus(status, 'Error: ' + (j.detail||JSON.stringify(j)), false);
+  } catch(e){ setStatus(status, 'Network error: '+ e.message, false); }
+}
+
+function makeResultCard(r, i) {
+  const div = document.createElement('div'); div.className='card';
+  const title = document.createElement('h3'); title.textContent = `${i+1}. ${r.chunk_id}`;
+  const meta = document.createElement('div'); meta.className='meta';
+  const score = document.createElement('div'); score.className='score'; score.textContent = (r.score || 0).toFixed(4);
+  meta.appendChild(score);
+  const doc = document.createElement('div'); doc.style.marginLeft='8px'; doc.style.color='var(--muted)'; doc.textContent='chunk preview';
+  meta.appendChild(doc);
+
+  const snippet = document.createElement('div'); snippet.className='snippet'; snippet.textContent = r.text || "";
+  const actions = document.createElement('div'); actions.className='card-actions';
+  const btnCopy = document.createElement('button'); btnCopy.className='chip'; btnCopy.textContent='Copy';
+  btnCopy.onclick = () => { navigator.clipboard.writeText(r.text || ""); btnCopy.textContent = 'Copied'; setTimeout(()=>btnCopy.textContent='Copy',1200); };
+  const btnOpen = document.createElement('button'); btnOpen.className='chip'; btnOpen.textContent='Open';
+  btnOpen.onclick = () => { alert("Chunk ID: " + r.chunk_id); };
+
+  actions.appendChild(btnCopy); actions.appendChild(btnOpen);
+
+  div.appendChild(title); div.appendChild(meta); div.appendChild(snippet); div.appendChild(actions);
+  return div;
+}
+
+async function runQuery() {
+  const q = $('queryInput').value.trim();
+  const k = parseInt($('kInput').value || '5', 10);
+  const status = $('queryStatus'); const rc = $('resultCount'); const resultsDiv = $('results');
+  if(!q) { setStatus(status, "Enter a query", false); return; }
+  setStatus(status, "Searching...");
+  resultsDiv.innerHTML = ''; rc.textContent = '0';
+  try {
+    const key = $('apiKey').value.trim();
+    const headers = {'Content-Type':'application/json'}; if(key) headers['x-api-key']=key;
+    const res = await fetch(apiBase + '/query', {method:'POST', headers, body: JSON.stringify({query: q, k})});
+    const json = await res.json();
+    if(!res.ok) { setStatus(status, 'Error: ' + (json.detail||JSON.stringify(json)), false); return; }
+    const arr = json.results || [];
+    if(arr.length === 0) { setStatus(status, "No results", true); return; }
+    setStatus(status, `Returned ${arr.length} results`);
+    rc.textContent = String(arr.length);
+    arr.forEach((r,i)=> resultsDiv.appendChild(makeResultCard(r,i)));
+    $('lastQuery').textContent = `Query: "${q}"`;
+  } catch(e) { setStatus(status, 'Network error: ' + e.message, false); }
+}
+
+/* wire up buttons */
+$('ingestTextBtn').addEventListener('click', ingestText);
+$('clearText').addEventListener('click', ()=>{ $('textArea').value=''; $('ingestTextStatus').textContent=''; });
+$('ingestPdfBtn').addEventListener('click', ingestPdf);
+$('queryBtn').addEventListener('click', runQuery);
+
+/* allow pressing Enter to run query */
+$('queryInput').addEventListener('keydown', e => { if(e.key === 'Enter') runQuery(); });
+
+</script>
+</body>
+</html>

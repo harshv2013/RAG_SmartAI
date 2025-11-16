@@ -1,0 +1,88 @@
+Artificial Intelligence (AI) has rapidly moved from a niche research topic to a foundation technology
+that impacts nearly every industry. Over the past decade, improvements in model architectures,
+increases in compute, and the availability of large-scale datasets have combined to produce models
+that perform complex perceptual and cognitive tasks at or above human levels in narrow domains.
+
+Machine learning (ML) is the primary engine behind modern AI. ML techniques allow models to discover
+patterns in data and generalize to unseen inputs. Supervised learning, which uses labeled examples,
+has driven progress in classification, object detection, and many structured prediction tasks.
+Unsupervised learning, which finds structure without labels, includes clustering, dimensionality reduction,
+and certain generative methods. Reinforcement learning trains agents to act in an environment through
+trial and error using reward signals and has powered advances in games, robotics, and decision systems.
+
+Deep learning — neural networks with many layers — unlocked new capabilities by providing models
+with the capacity to learn hierarchical representations directly from raw data. Convolutional neural
+networks (CNNs) accelerated image understanding; recurrent neural networks (RNNs) and later transformers
+revolutionized sequence modeling. The transformer architecture, introduced in 2017, enabled highly-parallel
+training and attention mechanisms that let models focus on relevant parts of input. Transformers underpin
+modern large language models (LLMs) used for natural language processing, code generation, summarization,
+and more.
+
+Data is the lifeblood of machine learning. Curating, cleaning, and annotating high-quality datasets
+is often the costliest part of building a practical system. Techniques such as data augmentation,
+self-supervised pretraining, and transfer learning have reduced the need for massive labeled datasets
+for every task. Still, dataset bias, labeling errors, and distribution shift remain persistent challenges.
+Monitoring data drift and having a robust evaluation strategy are essential to maintaining model performance
+over time.
+
+Model evaluation uses a combination of quantitative metrics and human judgment. For classification problems,
+metrics like accuracy, precision, recall, F1, and area under the ROC curve are common. For structured prediction
+or ranking tasks, metrics can include BLEU, ROUGE, MAP, or NDCG depending on the domain. For language
+models and generative systems, automatic metrics often fail to capture fluency, factuality, and usefulness,
+so human evaluation and downstream task performance are frequently used as well.
+
+Deploying models brings engineering challenges: latency constraints, cost of inference, model size, and
+online versus batch prediction trade-offs. Techniques such as model pruning, quantization, distillation,
+and efficient operator kernels help reduce deployment costs. Serving architectures commonly use a mix of
+edge and cloud inference depending on latency and privacy requirements. Reliable feature stores, experiment
+tracking, and CI/CD for models (MLOps) are now standard parts of production ML systems.
+
+Interpretability and fairness are increasingly important. Models can learn spurious correlations and amplify
+biases present in training data. Techniques for explainability, fairness evaluation, and adversarial testing
+help organizations understand model behavior and mitigate risks. In regulated domains — finance, healthcare,
+and legal — explainability may be a compliance requirement, so thoughtful design and documentation are critical.
+
+Natural Language Processing (NLP) has made dramatic strides. Pretrained language models provide contextualized
+representations and can be fine-tuned or adapted to many tasks. Retrieval-augmented generation (RAG) is a technique
+where an external knowledge source (documents, databases) is retrieved and fed into a generator so the model
+can produce grounded, up-to-date responses. RAG systems typically consist of a retriever (dense or sparse),
+an index, and a generator (LLM). Chunking documents into passages is a core step for indexing and retrieval.
+
+Chunking design choices affect retrieval quality and downstream generation. Chunk size, overlap, and unit (characters,
+words, sentences, or tokens) determine how likely a relevant fact will be wholly contained in a retrieved passage.
+Too large chunks lower precision and increase index size; too small chunks can fragment information across chunks,
+requiring multiple retrieved passages. Overlap helps reduce boundary problems. Token-aware chunking (using the target LLM's
+tokenizer) is preferred for strict context-window management.
+
+Vector search leveraged by dense retrievers uses embeddings to represent passages and queries in a shared numerical
+space. Common embedding models map semantically-similar texts to nearby vectors. Index structures (FAISS, Annoy,
+ScaNN, HNSW) provide efficient approximate nearest neighbor retrieval at scale. Many production systems combine
+sparse (BM25) and dense retrieval in hybrid architectures for improved recall.
+
+Privacy and data governance complicate real-world applications. Sensitive data often must be redacted or handled
+via secure enclaves. Differential privacy and federated learning are techniques to reduce exposure of raw training
+data while still learning useful models. Data lineage, versioning, and clear consent mechanisms are essential for
+trustworthy AI.
+
+The field is also evolving rapidly on the compute and hardware side. Specialized accelerators (GPUs, TPUs, and
+domain-specific chips) and better distributed training algorithms enable training of very large models. Efficient
+architectural design, such as sparse mixture-of-experts and low-rank approximations, aim to increase capacity while
+containing inference costs.
+
+Applications abound: healthcare diagnostics, drug discovery, climate modeling, personalized education, finance
+automations, robotics, and creative media generation. But with great power comes great responsibility. The community
+grapples with misuse (deepfakes, automated fraud), environmental impacts of training large models, and societal impacts
+like job displacement.
+
+For practitioners building RAG and retrieval systems, the typical pipeline is:
+1. Ingest raw documents (PDFs, HTML, scraped text).
+2. Clean and normalize text (remove boilerplate, deduplicate).
+3. Split into passages/chunks with a chosen strategy (size, overlap, sentence-aware).
+4. Embed passages and build an index.
+5. At query time, embed the query, retrieve top-k passages, optionally rerank with a cross-encoder.
+6. Provide retrieved context plus prompt engineering to the LLM for generation.
+7. Log provenance and citations for the generated output.
+
+Experimentation is key. Try multiple chunk sizes and overlap values. Evaluate retrieval with realistic queries and
+measure whether the retrieved passages contain the evidence you need. Use rerankers to improve top-k precision. Finally,
+ensure your system has monitoring to detect drift, incorrect citations, and other failures in production.

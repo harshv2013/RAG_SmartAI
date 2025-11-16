@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+venv2/
+.env
+.env.*
+
+# Editor
+.vscode/
+.idea/
+
+# Mac/Win
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local Databases
+chunks_meta.db
+*.sqlite
+*.db
+
+# Vector indices
+faiss.index
+*.index
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Uploaded PDFs
+*.pdf
+upload/
